@@ -96,8 +96,7 @@ while true; do
             if sudo groupadd docker && sudo usermod -aG docker $USER; then
                 echo "Установка разрешений для Docker: Успешно"
             else
-                echo "Установка разрешений для Docker: Ошибка"
-                exit 1
+                echo "Установка разрешений для Docker: Разрешение было применено по умолчанию"
             fi
 
             # Установка GO
