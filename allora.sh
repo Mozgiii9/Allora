@@ -263,8 +263,9 @@ services:
           --topic=allora-topic-1-worker \
           --allora-chain-key-name=testkey \
           --allora-chain-restore-mnemonic='$seed_phrase' \
-          --allora-node-rpc-address=https://allora-rpc.edgenet.allora.network/ \
+          --allora-node-rpc-address=https://allora-rpc.testnet-1.testnet.allora.network \
           --allora-chain-topic-id=1
+          --allora-chain-worker-mode=worker
     volumes:
       - ./worker-data:/data
     working_dir: /data
