@@ -51,7 +51,7 @@ setup_telegram_bot() {
     run_command "wget -q https://raw.githubusercontent.com/Mozgiii9/Allora/main/bot.py" "Не удалось скачать скрипт Telegram бота."
 
     # Вставляем API ключ в файл бота
-    sed -i "s/^TOKEN = \"TELEGRAM_BOT_TOKEN\"/TOKEN = \"$bot_token\"/" bot.py
+    sed -i "s/TOKEN = \"TELEGRAM_BOT_TOKEN\"/TOKEN = \"$bot_token\"/" bot.py
 
     # Устанавливаем необходимые зависимости для бота
     pip3 install python-telegram-bot python-dotenv
