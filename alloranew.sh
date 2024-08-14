@@ -177,7 +177,7 @@ while true; do
 EOF
 
             log_message "Запуск Allora Worker..."
-            run_command "chmod +x init.config && ./init.config" "Не удалось запустить init.config."
+            run_command "chmod +x init.config && ./init.config"
             run_command "docker compose up -d --build" "Не удалось запустить Docker Compose. Перезагружаем Docker и пробуем снова." && restart_docker && run_command "docker compose up -d --build"
             ;;
         2)
