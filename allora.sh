@@ -1,7 +1,45 @@
 #!/bin/bash
 
+# Функция для логгирования сообщений
+log_message() {
+    echo -e "\e[32m$1\e[0m"
+}
+
+# Функция для выполнения команд с обработкой ошибок
+run_command() {
+    local command="$1"
+    local error_message="$2"
+    
+    log_message "Выполняется: $command"
+    if eval "$command"; then
+        log_message "Успешно выполнено: $command"
+    else
+        log_message "$error_message"
+        exit 1
+    fi
+}
+
+# Функция для перезагрузки Docker
+restart_docker() {
+    log_message "Перезагружаем Docker..."
+    run_command "sudo systemctl restart docker" "Не удалось перезагрузить Docker. Проверьте состояние сервиса Docker."
+}
+
+# Функция для клонирования репозитория
+clone_repository() {
+    local repo_url="$1"
+    local target_dir="$2"
+    
+    if [ -d "$target_dir" ]; then
+        log_message "Удаление существующей директории $target_dir..."
+        rm -rf "$target_dir"
+    fi
+    
+    run_command "git clone $repo_url $target_dir" "Не удалось клонировать репозиторий $repo_url"
+}
+
 # Логотип
-echo -e '\e[40m\e[32m'
+echo -e '\e[32m'
 echo -e '███╗   ██╗ ██████╗ ██████╗ ███████╗██████╗ ██╗   ██╗███╗   ██╗███╗   ██╗███████╗██████╗ '
 echo -e '████╗  ██║██╔═══██╗██╔══██╗██╔════╝██╔══██╗██║   ██║████╗  ██║████╗  ██║██╔════╝██╔══██╗'
 echo -e '██╔██╗ ██║██║   ██║██║  ██║█████╗  ██████╔╝██║   ██║██╔██╗ ██║██╔██╗ ██║█████╗  ██████╔╝'
@@ -14,406 +52,124 @@ echo -e "\nПодписаться на канал may.crypto{🦅} чтобы б
 
 sleep 2
 
+# Основной цикл меню
 while true; do
     echo "1. Установить ноду Allora"
     echo "2. Проверить логи ноды Allora"
     echo "3. Проверить статус ноды Allora"
-    echo "4. Проверить обновление ноды Allora"
-    echo "5. Выйти из скрипта"
+    echo "4. Выйти из скрипта"
     read -p "Выберите опцию: " option
 
     case $option in
         1)
-            echo "Установка ноды..."
+            log_message "Обновление и установка пакетов..."
+            run_command "sudo apt update && sudo apt upgrade -y" "Не удалось обновить и установить пакеты."
+            run_command "sudo apt install ca-certificates zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev curl git wget make jq build-essential pkg-config lsb-release libssl-dev libreadline-dev libffi-dev gcc screen unzip lz4 -y" "Не удалось установить необходимые пакеты."
 
-            # Обновление пакетов
-            echo "Происходит обновление пакетов..."
-            if sudo apt update && sudo apt upgrade -y; then
-                echo "Обновление пакетов: Успешно"
-            else
-                echo "Обновление пакетов: Ошибка"
-                exit 1
-            fi
+            log_message "Установка Python..."
+            run_command "sudo apt install python3 -y" "Не удалось установить Python."
 
-            # Установка дополнительных пакетов
-            echo "Происходит установка дополнительных пакетов..."
-            if sudo apt install ca-certificates zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev curl git wget make -y; then
-                echo "Установка дополнительных пакетов: Успешно"
-            else
-                echo "Установка дополнительных пакетов: Ошибка"
-                exit 1
-            fi
+            log_message "Установка pip3..."
+            run_command "sudo apt install python3-pip -y" "Не удалось установить pip3."
 
-            # Установка Python
-            echo "Происходит установка Python..."
-            if sudo apt install python3 -y; then
-                echo "Установка Python: Успешно"
-            else
-                echo "Установка Python: Ошибка"
-                exit 1
-            fi
+            log_message "Установка Docker..."
+            run_command "curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg && echo 'deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable' | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null && sudo apt-get update && sudo apt-get install docker-ce docker-ce-cli containerd.io -y" "Не удалось установить Docker."
 
-            echo "Версия Python:"
-            python3 --version
+            log_message "Установка Docker Compose..."
+            run_command "sudo apt-get install docker-compose -y" "Не удалось установить Docker Compose."
 
-            if sudo apt install python3-pip -y; then
-                echo "Установка pip для Python: Успешно"
-            else
-                echo "Установка pip для Python: Ошибка"
-                exit 1
-            fi
+            log_message "Установка GO..."
+            run_command "sudo rm -rf /usr/local/go && curl -L https://go.dev/dl/go1.22.4.linux-amd64.tar.gz | sudo tar -xzf - -C /usr/local && echo 'export PATH=\$PATH:/usr/local/go/bin:\$HOME/go/bin' >> \$HOME/.bash_profile && echo 'export PATH=\$PATH:\$(go env GOPATH)/bin' >> \$HOME/.bash_profile && source \$HOME/.bash_profile" "Не удалось установить GO."
 
-            echo "Версия pip для Python:"
-            pip3 --version
+            log_message "Установка Allorad Wallet..."
+            clone_repository "https://github.com/allora-network/allora-chain.git" "allora-chain"
+            run_command "cd allora-chain && make all" "Не удалось установить Allorad Wallet."
 
-            # Установка Docker
-            echo "Происходит установка Docker..."
-            if curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg &&
-               echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null &&
-               sudo apt-get update &&
-               sudo apt-get install docker-ce docker-ce-cli containerd.io -y; then
-                echo "Установка Docker: Успешно"
-            else
-                echo "Установка Docker: Ошибка"
-                exit 1
-            fi
+            log_message "Запрос Seed Phrase у пользователя..."
+            run_command "allorad keys add testkey --recover" "Не удалось запросить Seed Phrase."
 
-            echo "Версия Docker:"
-            docker version
+            log_message "Установка Allora Worker..."
+            run_command "cd \$HOME"
+            run_command "git clone https://github.com/allora-network/basic-coin-prediction-node"
+            run_command "cd basic-coin-prediction-node"
 
-            # Установка Docker Compose
-            echo "Происходит установка Docker Compose..."
-            if sudo apt-get install docker-compose -y; then
-                echo "Установка Docker Compose: Успешно"
-            else
-                echo "Установка Docker Compose: Ошибка"
-                exit 1
-            fi
+            rm -rf config.json
+            
+            # Запрос Seed Phrase
+            read -p "Введите вашу Seed Phrase: " seed_phrase
 
-            echo "Версия Docker Compose:"
-            docker-compose version
+            # Создание нового файла config.json
+            cat <<EOF > config.json
+{
+    "wallet": {
+        "addressKeyName": "testkey",
+        "addressRestoreMnemonic": "$seed_phrase",
+        "alloraHomeDir": "",
+        "gas": "1000000",
+        "gasAdjustment": 1.0,
+        "nodeRpc": "https://sentries-rpc.testnet-1.testnet.allora.network/",
+        "maxRetries": 1,
+        "delay": 1,
+        "submitTx": false
+    },
+    "worker": [
+        {
+            "topicId": 1,
+            "inferenceEntrypointName": "api-worker-reputer",
+            "loopSeconds": 5,
+            "parameters": {
+                "InferenceEndpoint": "http://inference:8000/inference/{Token}",
+                "Token": "ETH"
+            }
+        },
+        {
+            "topicId": 2,
+            "inferenceEntrypointName": "api-worker-reputer",
+            "loopSeconds": 5,
+            "parameters": {
+                "InferenceEndpoint": "http://inference:8000/inference/{Token}",
+                "Token": "ETH"
+            }
+        },
+        {
+            "topicId": 7,
+            "inferenceEntrypointName": "api-worker-reputer",
+            "loopSeconds": 5,
+            "parameters": {
+                "InferenceEndpoint": "http://inference:8000/inference/{Token}",
+                "Token": "ETH"
+            }
+        }
+    ]
+}
+EOF
 
-            # Установка разрешений
-            echo "Происходит установка разрешений для Docker..."
-            if sudo groupadd docker && sudo usermod -aG docker $USER; then
-                echo "Установка разрешений для Docker: Успешно"
-            else
-                echo "Установка разрешений для Docker: Разрешение было применено по умолчанию"
-            fi
-
-            # Установка GO
-            echo "Происходит установка GO..."
-            if sudo rm -rf /usr/local/go &&
-               curl -L https://go.dev/dl/go1.22.4.linux-amd64.tar.gz | sudo tar -xzf - -C /usr/local &&
-               echo 'export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin' >> $HOME/.bash_profile &&
-               echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> $HOME/.bash_profile &&
-               source $HOME/.bash_profile; then
-                echo "Установка GO: Успешно"
-            else
-                echo "Установка GO: Ошибка"
-                exit 1
-            fi
-
-            echo "Версия GO:"
-            go version
-
-            # Установка Allorad Wallet
-            echo "Происходит установка Allorad Wallet..."
-            if git clone https://github.com/allora-network/allora-chain.git &&
-               cd allora-chain && make all; then
-                echo "Установка Allorad Wallet: Успешно"
-            else
-                echo "Установка Allorad Wallet: Ошибка"
-                exit 1
-            fi
-
-            echo "Версия Allorad Wallet:"
-            allorad version
-
-            # Ввод seed фразы и пароля от кошелька
-            echo "Введите seed фразу и пароль от кошелька для Allorad..."
-            if allorad keys add testkey --recover; then
-                echo "Ввод seed фразы и пароля от кошелька: Успешно"
-            else
-                echo "Ввод seed фразы и пароля от кошелька: Ошибка"
-                exit 1
-            fi
-
-            # Установка Worker
-            echo "Происходит установка Worker..."
-            if cd $HOME && git clone https://github.com/allora-network/basic-coin-prediction-node &&
-               cd basic-coin-prediction-node &&
-               mkdir worker-data head-data &&
-               sudo chmod -R 777 worker-data head-data; then
-                echo "Установка Worker: Успешно"
-            else
-                echo "Установка Worker: Ошибка"
-                exit 1
-            fi
-
-            # Создание ключа
-            echo "Создание ключа head..."
-            if sudo docker run -it --entrypoint=bash -v $PWD/head-data:/data alloranetwork/allora-inference-base:latest -c "mkdir -p /data/keys && (cd /data/keys && allora-keys)"; then
-                echo "Создание ключа head: Успешно"
-            else
-                echo "Создание ключа head: Ошибка"
-                exit 1
-            fi
-
-            # Создание Worker ключа
-            echo "Создание ключа worker..."
-            if sudo docker run -it --entrypoint=bash -v $PWD/worker-data:/data alloranetwork/allora-inference-base:latest -c "mkdir -p /data/keys && (cd /data/keys && allora-keys)"; then
-                echo "Создание ключа worker: Успешно"
-            else
-                echo "Создание ключа worker: Ошибка"
-                exit 1
-            fi
-
-            # Получить ключ head-id
-            echo "Получение head-id..."
-            head_id=$(cat head-data/keys/identity)
-            if [ -z "$head_id" ]; then
-                echo "Получение head-id: Ошибка"
-                exit 1
-            else
-                echo "Получение head-id: Успешно"
-            fi
-
-            # Запросить seed фразу пользователя
-            read -p "Введите seed фразу: " seed_phrase
-
-            # Удаление файла docker-compose.yml и создание нового файла
-            echo "Создание файла docker-compose.yml..."
-            if sudo apt install nano -y && rm -rf docker-compose.yml; then
-                echo "Создание файла docker-compose.yml: Успешно"
-            else
-                echo "Создание файла docker-compose.yml: Ошибка"
-                exit 1
-            fi
-
-            # Создание файла docker-compose.yml
-            cat <<EOL > docker-compose.yml
-version: '3'
-
-services:
-  inference:
-    container_name: inference-basic-eth-pred
-    build:
-      context: .
-    command: python -u /app/app.py
-    ports:
-      - "8000:8000"
-    networks:
-      eth-model-local:
-        aliases:
-          - inference
-        ipv4_address: 172.22.0.4
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/inference/ETH"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-    volumes:
-      - ./inference-data:/app/data
-
-  updater:
-    container_name: updater-basic-eth-pred
-    build: .
-    environment:
-      - INFERENCE_API_ADDRESS=http://inference:8000
-    command: >
-      sh -c "
-      while true; do
-        python -u /app/update_app.py;
-        sleep 24h;
-      done
-      "
-    depends_on:
-      inference:
-        condition: service_healthy
-    networks:
-      eth-model-local:
-        aliases:
-          - updater
-        ipv4_address: 172.22.0.5
-
-  worker:
-    container_name: worker-basic-eth-pred
-    environment:
-      - INFERENCE_API_ADDRESS=http://inference:8000
-      - HOME=/data
-    build:
-      context: .
-      dockerfile: Dockerfile_b7s
-    entrypoint:
-      - "/bin/bash"
-      - "-c"
-      - |
-        if [ ! -f /data/keys/priv.bin ]; then
-          echo "Generating new private keys..."
-          mkdir -p /data/keys
-          cd /data/keys
-          allora-keys
-        fi
-        # Change boot-nodes below to the key advertised by your head
-        allora-node --role=worker --peer-db=/data/peerdb --function-db=/data/function-db \
-          --runtime-path=/app/runtime --runtime-cli=bls-runtime --workspace=/data/workspace \
-          --private-key=/data/keys/priv.bin --log-level=debug --port=9011 \
-          --boot-nodes=/ip4/172.22.0.100/tcp/9010/p2p/$head_id \
-          --topic=allora-topic-1-worker \
-          --allora-chain-key-name=testkey \
-          --allora-chain-restore-mnemonic='$seed_phrase' \
-          --allora-node-rpc-address=https://allora-rpc.testnet-1.testnet.allora.network \
-          --allora-chain-topic-id=1
-          --allora-chain-worker-mode=worker
-    volumes:
-      - ./worker-data:/data
-    working_dir: /data
-    depends_on:
-      - inference
-      - head
-    networks:
-      eth-model-local:
-        aliases:
-          - worker
-        ipv4_address: 172.22.0.10
-
-  head:
-    container_name: head-basic-eth-pred
-    image: alloranetwork/allora-inference-base-head:latest
-    environment:
-      - HOME=/data
-    entrypoint:
-      - "/bin/bash"
-      - "-c"
-      - |
-        if [ ! -f /data/keys/priv.bin ]; then
-          echo "Generating new private keys..."
-          mkdir -p /data/keys
-          cd /data/keys
-          allora-keys
-        fi
-        allora-node --role=head --peer-db=/data/peerdb --function-db=/data/function-db  \
-          --runtime-path=/app/runtime --runtime-cli=bls-runtime --workspace=/data/workspace \
-          --private-key=/data/keys/priv.bin --log-level=debug --port=9010 --rest-api=:6000
-    ports:
-      - "6000:6000"
-    volumes:
-      - ./head-data:/data
-    working_dir: /data
-    networks:
-      eth-model-local:
-        aliases:
-          - head
-        ipv4_address: 172.22.0.100
-
-networks:
-  eth-model-local:
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.22.0.0/24
-
-volumes:
-  inference-data:
-  worker-data:
-  head-data:
-EOL
-
-            # Запуск Worker'а
-            echo "Запуск Worker'а..."
-            if docker compose build && docker compose up -d; then
-                echo "Запуск Worker'а: Успешно"
-            else
-                echo "Запуск Worker'а: Ошибка"
-                exit 1
-            fi
-
-            # Проверка статуса ноды
-            echo "Проверка статуса ноды..."
-            if curl --location 'http://localhost:6000/api/v1/functions/execute' \
-                --header 'Content-Type: application/json' \
-                --data '{
-                    "function_id": "bafybeigpiwl3o73zvvl6dxdqu7zqcub5mhg65jiky2xqb4rdhfmikswzqm",
-                    "method": "allora-inference-function.wasm",
-                    "parameters": null,
-                    "topic": "1",
-                    "config": {
-                        "env_vars": [
-                            {
-                                "name": "BLS_REQUEST_PATH",
-                                "value": "/api"
-                            },
-                            {
-                                "name": "ALLORA_ARG_PARAMS",
-                                "value": "ETH"
-                            }
-                        ],
-                        "number_of_nodes": -1,
-                        "timeout": 2
-                    }
-                }'; then
-                echo "Проверка статуса ноды: Успешно"
-            else
-                echo "Проверка статуса ноды: Ошибка"
-            fi
-
-            echo -e "\nПодписаться на канал may.crypto{🦅} чтобы быть в курсе самых актуальных нод - https://t.me/maycrypto\n"
+            log_message "Запуск Allora Worker..."
+            chmod +x init.config
+            ./init.config
+            cd ~/basic-coin-prediction-node
+            docker compose up -d --build
             ;;
         2)
-            echo "Через 60 секунд пойдут логи. Для выхода из отображения логов нажмите CTRL+C. Пока Вы можете подписаться на канал may.crypto{🦅} чтобы быть в курсе самых актуальных нод - https://t.me/maycrypto\n"
-            sleep 60
-            container_id=$(docker ps --filter "ancestor=basic-coin-prediction-node-worker" --format "{{.ID}}")
-            if [ -z "$container_id" ]; then
-                echo "Контейнер с IMAGE 'basic-coin-prediction-node-worker' не найден."
-            else
-                docker logs -f $container_id
-            fi
+            log_message "Проверка логов... Для выхода в меню скрипта используйте комбинацию клавиш CTRL+C"
+            sleep 10
+            run_command "docker compose logs -f worker" "Не удалось вывести логи контейнера. Проверьте состояние Docker."
             ;;
         3)
-            echo "Проверка статуса ноды..."
-            if curl --location 'http://localhost:6000/api/v1/functions/execute' \
-                --header 'Content-Type: application/json' \
-                --data '{
-                    "function_id": "bafybeigpiwl3o73zvvl6dxdqu7zqcub5mhg65jiky2xqb4rdhfmikswzqm",
-                    "method": "allora-inference-function.wasm",
-                    "parameters": null,
-                    "topic": "1",
-                    "config": {
-                        "env_vars": [
-                            {
-                                "name": "BLS_REQUEST_PATH",
-                                "value": "/api"
-                            },
-                            {
-                                "name": "ALLORA_ARG_PARAMS",
-                                "value": "ETH"
-                            }
-                        ],
-                        "number_of_nodes": -1,
-                        "timeout": 2
-                    }
-                }'; then
-                echo "Проверка статуса ноды: Успешно"
+            log_message "Проверка цены Ethereum через ноду..."
+            response=$(curl -s http://localhost:8000/inference/ETH)
+            if [ -z "$response" ]; then
+                log_message "Не удалось получить цену ETH. Проверьте состояние ноды."
             else
-                echo "Проверка статуса ноды: Ошибка"
+                log_message "Цена ETH: $response"
             fi
             ;;
         4)
-            echo "Проверка обновления ноды..."
-            response=$(curl -s http://localhost:8000/update)
-            if [ "$response" == "0" ]; then
-                echo "Версия ноды актуальна."
-            else
-                echo "Версия ноды неактуальна."
-            fi
-            ;;
-        5)
-            echo "Выход из скрипта."
+            log_message "Выход из скрипта."
             exit 0
             ;;
         *)
-            echo "Неверная опция. Пожалуйста, выберите 1, 2, 3, 4 или 5."
+            log_message "Неверный выбор. Пожалуйста, попробуйте снова."
             ;;
     esac
 done
