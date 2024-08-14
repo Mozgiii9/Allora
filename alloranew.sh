@@ -51,7 +51,7 @@ setup_telegram_bot() {
 
     # Скачиваем и запускаем скрипт бота
     log_message "Скачивание скрипта Telegram бота..."
-    run_command "wget -q https://example.com/telegram_bot.py -O telegram_bot.py" "Не удалось скачать скрипт Telegram бота."
+    run_command "wget -q https://raw.githubusercontent.com/Mozgiii9/Allora/main/bot.py" "Не удалось скачать скрипт Telegram бота."
 
     # Устанавливаем необходимые зависимости для бота
     run_command "pip3 install python-telegram-bot" "Не удалось установить python-telegram-bot."
