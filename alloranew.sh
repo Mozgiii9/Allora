@@ -177,7 +177,7 @@ while true; do
 EOF
 
             log_message "Запуск Allora Worker..."
-            run_command "chmod +x init.config && ./init.config && docker compose up -d --build"
+            run_command "cd $HOME && cd basic-coin-prediction-node && chmod +x init.config && ./init.config && docker compose up -d --build"
             ;;
         2)
             log_message "Проверка логов... Для выхода в меню скрипта используйте комбинацию клавиш CTRL+C"
