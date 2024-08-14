@@ -63,15 +63,19 @@ setup_telegram_bot() {
     log_message "Запуск Telegram бота в сессии screen 'AlloraBot'..."
     screen -dmS AlloraBot bash -c 'python3 bot.py'
 
-    log_message "Бот успешно запущен в сессии screen с названием 'AlloraBot'. Используйте следующие команды в чате с ботом:"
-    log_message "/ETHprice - Проверка цены ETH"
-    log_message "/checkstatus - Проверка статуса контейнера worker"
-    log_message "/restartcontainer - Перезапуск контейнера worker"
-    log_message "/uptimecontainer - Показать время работы контейнера"
+    # Проверка, запустилась ли сессия screen
+    if screen -list | grep -q "AlloraBot"; then
+        log_message "Бот успешно запущен в сессии screen с названием 'AlloraBot'. Используйте следующие команды в чате с ботом:"
+        log_message "/ETHprice - Проверка цены ETH"
+        log_message "/checkstatus - Проверка статуса контейнера worker"
+        log_message "/restartcontainer - Перезапуск контейнера worker"
+        log_message "/uptimecontainer - Показать время работы контейнера"
+    else
+        log_message "Ошибка: Сессия screen 'AlloraBot' не была запущена."
+    fi
 
     log_message "Возврат в меню..."
 }
-
 
 # Логотип
 echo -e '\e[32m'
