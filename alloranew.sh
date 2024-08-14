@@ -122,13 +122,8 @@ while true; do
             run_command "allorad keys add testkey --recover" "Не удалось запросить Seed Phrase."
 
             log_message "Установка Allora Worker..."
-            git clone https://github.com/allora-network/basic-coin-prediction-node
-            if [ -d "basic-coin-prediction-node" ]; then
-                cd basic-coin-prediction-node || { log_message "Ошибка при переходе в каталог basic-coin-prediction-node"; exit 1; }
-            else
-                log_message "Ошибка: папка basic-coin-prediction-node не найдена после клонирования."
-                exit 1
-            fi
+            clone_repository "https://github.com/allora-network/basic-coin-prediction-node" "basic-coin-prediction-node"
+            cd basic-coin-prediction-node || { log_message "Ошибка при переходе в каталог basic-coin-prediction-node"; exit 1; }
 
             # Запрос Seed Phrase
             read -p "Введите вашу Seed Phrase: " seed_phrase
@@ -182,11 +177,11 @@ EOF
             log_message "Запуск Allora Worker..."
             if [ -f "init.config" ]; then
                 chmod +x init.config
+                run_command "./init.config && docker compose up -d --build" "Не удалось запустить Allora Worker."
             else
                 log_message "Файл init.config не найден. Проверьте его создание."
                 exit 1
             fi
-            run_command "./init.config && docker compose up -d --build"
             ;;
         2)
             log_message "Проверка логов... Для выхода в меню скрипта используйте комбинацию клавиш CTRL+C"
