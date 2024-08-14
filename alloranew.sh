@@ -46,9 +46,6 @@ setup_telegram_bot() {
 
     echo "Настройка Telegram бота..."
 
-    # Сохраняем API ключ в конфигурационном файле
-    echo "TELEGRAM_BOT_TOKEN=\"$bot_token\"" > telegram_bot_config.sh
-
     # Скачиваем и запускаем скрипт бота
     log_message "Скачивание скрипта Telegram бота..."
     run_command "wget -q https://raw.githubusercontent.com/Mozgiii9/Allora/main/bot.py" "Не удалось скачать скрипт Telegram бота."
@@ -61,8 +58,12 @@ setup_telegram_bot() {
 
     # Запускаем бота в новой сессии screen
     log_message "Запуск Telegram бота в сессии screen 'AlloraBot'..."
-    screen -dmS AlloraBot bash -c 'python3 bot.py'
-
+    
+    # Команда для запуска
+    screen_command="screen -dmS AlloraBot bash -c 'python3 bot.py'"
+    echo "Выполняется команда: $screen_command"
+    $screen_command
+    
     # Проверка, запустилась ли сессия screen
     if screen -list | grep -q "AlloraBot"; then
         log_message "Бот успешно запущен в сессии screen с названием 'AlloraBot'. Используйте следующие команды в чате с ботом:"
@@ -76,6 +77,7 @@ setup_telegram_bot() {
 
     log_message "Возврат в меню..."
 }
+
 
 # Логотип
 echo -e '\e[32m'
