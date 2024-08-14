@@ -53,12 +53,15 @@ setup_telegram_bot() {
     log_message "Скачивание скрипта Telegram бота..."
     run_command "wget -q https://raw.githubusercontent.com/Mozgiii9/Allora/main/bot.py" "Не удалось скачать скрипт Telegram бота."
 
+    # Вставляем API ключ в файл бота
+    sed -i "s/^TOKEN = os.getenv(\"TELEGRAM_BOT_TOKEN\")/TOKEN = \"$bot_token\"/" bot.py
+
     # Устанавливаем необходимые зависимости для бота
     run_command "pip3 install python-telegram-bot python-dotenv" "Не удалось установить зависимости для бота."
 
     # Запускаем бота в новой сессии screen
-    log_message "Запуск Telegram бота..."
-    screen -dmS AlloraBot bash -c 'source telegram_bot_config.sh && python3 bot.py'
+    log_message "Запуск Telegram бота в сессии screen 'AlloraBot'..."
+    screen -dmS AlloraBot bash -c 'python3 bot.py'
 
     log_message "Бот успешно запущен в сессии screen с названием 'AlloraBot'. Используйте следующие команды в чате с ботом:"
     log_message "/ETHprice - Проверка цены ETH"
@@ -68,6 +71,7 @@ setup_telegram_bot() {
 
     log_message "Возврат в меню..."
 }
+
 
 # Логотип
 echo -e '\e[32m'
