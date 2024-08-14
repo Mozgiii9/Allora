@@ -54,14 +54,13 @@ setup_telegram_bot() {
     run_command "wget -q https://raw.githubusercontent.com/Mozgiii9/Allora/main/bot.py" "Не удалось скачать скрипт Telegram бота."
 
     # Устанавливаем необходимые зависимости для бота
-    run_command "pip3 install python-telegram-bot" "Не удалось установить python-telegram-bot."
+    run_command "pip3 install python-telegram-bot python-dotenv" "Не удалось установить зависимости для бота."
 
-    # Запускаем бота
+    # Запускаем бота в новой сессии screen
     log_message "Запуск Telegram бота..."
-    python3 bot.py &
-    echo $! > telegram_bot.pid
+    screen -dmS AlloraBot bash -c 'source telegram_bot_config.sh && python3 bot.py'
 
-    log_message "Бот успешно запущен. Используйте следующие команды в чате с ботом:"
+    log_message "Бот успешно запущен в сессии screen с названием 'AlloraBot'. Используйте следующие команды в чате с ботом:"
     log_message "/ETHprice - Проверка цены ETH"
     log_message "/checkstatus - Проверка статуса контейнера worker"
     log_message "/restartcontainer - Перезапуск контейнера worker"
