@@ -16,50 +16,60 @@ def get_server_info():
         hostname = socket.gethostname()
         ip_address = socket.gethostbyname(hostname)
         uptime = subprocess.check_output("uptime -p", shell=True).decode('utf-8').strip()
-        return f"IP-адрес сервера: {ip_address}\nВремя работы сервера: {uptime}"
+        return f"🌐 *IP-адрес сервера:* `{ip_address}`\n⏱ *Время работы сервера:* `{uptime}`"
     except Exception as e:
         logger.error(f"Ошибка при получении информации о сервере: {e}")
-        return "Не удалось получить информацию о сервере."
+        return "❌ Не удалось получить информацию о сервере."
 
 async def start(update: Update, context) -> None:
     server_info = get_server_info()
-    await update.message.reply_text(f'Здравствуйте! Я бот для мониторинга ноды Allora.\n\n{server_info}')
+    commands = (
+        "⚙️ /ETHprice - *Узнать текущую цену ETH*\n"
+        "🔍 /checkstatus - *Проверить статус контейнера*\n"
+        "🔄 /restartcontainer - *Перезапустить контейнер*\n"
+        "⏳ /uptimecontainer - *Показать время работы контейнера*\n"
+    )
+    await update.message.reply_text(
+        f'👋 *Здравствуйте! Я бот для мониторинга ноды Allora.*\n\n'
+        f'{server_info}\n\n'
+        f'📜 *Доступные команды:*\n{commands}',
+        parse_mode='Markdown'
+    )
 
 async def eth_price(update: Update, context) -> None:
     try:
         result = subprocess.check_output("curl -s http://localhost:8000/inference/ETH", shell=True).decode('utf-8')
-        await update.message.reply_text(f"Цена ETH: {result}")
+        await update.message.reply_text(f"💰 *Цена ETH:* `{result}`", parse_mode='Markdown')
     except subprocess.CalledProcessError:
-        await update.message.reply_text("Не удалось получить цену ETH. Проверьте состояние ноды.")
+        await update.message.reply_text("❌ Не удалось получить цену ETH. Проверьте состояние ноды.")
 
 async def check_status(update: Update, context) -> None:
     try:
         result = subprocess.check_output("docker inspect --format '{{json .State.Status}}' $(docker ps -q --filter name=worker)", shell=True).decode('utf-8').strip()
-        await update.message.reply_text(f"Статус контейнера worker: {result}")
+        await update.message.reply_text(f"📦 *Статус контейнера worker:* `{result}`", parse_mode='Markdown')
     except subprocess.CalledProcessError:
-        await update.message.reply_text("Не удалось получить статус контейнера worker.")
+        await update.message.reply_text("❌ Не удалось получить статус контейнера worker.")
 
 async def restart_container(update: Update, context) -> None:
     try:
         status = subprocess.check_output("docker inspect --format '{{json .State.Status}}' $(docker ps -q --filter name=worker)", shell=True).decode('utf-8').strip()
         if status != "running":
             subprocess.check_call("docker restart worker", shell=True)
-            await update.message.reply_text("Контейнер worker перезапущен.")
+            await update.message.reply_text("🔄 *Контейнер worker перезапущен.*", parse_mode='Markdown')
         else:
-            await update.message.reply_text("Контейнер worker уже работает.")
+            await update.message.reply_text("✅ *Контейнер worker уже работает.*", parse_mode='Markdown')
     except subprocess.CalledProcessError:
-        await update.message.reply_text("Не удалось перезапустить контейнер worker.")
+        await update.message.reply_text("❌ Не удалось перезапустить контейнер worker.")
 
 async def uptime_container(update: Update, context) -> None:
     try:
-        result = subprocess.check_output("docker inspect --format '{{.State.StartedAt}}' $(docker ps -q --filter name=worker)", shell=True).decode('utf-8').strip()
-        await update.message.reply_text(f"Время работы контейнера worker: {result}")
+        result = subprocess.check_output("docker ps -f name=worker --format '{{.Status}}'", shell=True).decode('utf-8').strip()
+        await update.message.reply_text(f"⏳ *Время работы контейнера worker:* `{result}`", parse_mode='Markdown')
     except subprocess.CalledProcessError:
-        await update.message.reply_text("Не удалось получить время работы контейнера worker.")
+        await update.message.reply_text("❌ Не удалось получить время работы контейнера worker.")
 
 def main():
-    load_dotenv()
-    TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
+    TOKEN = "TELEGRAM_BOT_TOKEN"
 
     app = ApplicationBuilder().token(TOKEN).build()
 
