@@ -51,18 +51,17 @@ setup_telegram_bot() {
     run_command "wget -q https://raw.githubusercontent.com/Mozgiii9/Allora/main/bot.py" "Не удалось скачать скрипт Telegram бота."
 
     # Вставляем API ключ в файл бота
-    sed -i "s/^TOKEN = os.getenv(\"TELEGRAM_BOT_TOKEN\")/TOKEN = \"$bot_token\"/" bot.py
+    sed -i "s/^TOKEN = \"TELEGRAM_BOT_TOKEN\"/TOKEN = \"$bot_token\"/" bot.py
 
     # Устанавливаем необходимые зависимости для бота
-    run_command "pip3 install python-telegram-bot python-dotenv" "Не удалось установить зависимости для бота."
+    pip3 install python-telegram-bot python-dotenv
 
     # Запускаем бота в новой сессии screen
     log_message "Запуск Telegram бота в сессии screen 'AlloraBot'..."
     
     # Команда для запуска
-    screen_command="screen -dmS AlloraBot bash -c 'python3 bot.py'"
+    screen -dmS AlloraBot bash -c 'python3 bot.py'
     echo "Выполняется команда: $screen_command"
-    $screen_command
     
     # Проверка, запустилась ли сессия screen
     if screen -list | grep -q "AlloraBot"; then
