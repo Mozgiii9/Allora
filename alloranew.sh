@@ -7,14 +7,12 @@ log_message() {
 
 # Функция для выполнения команд с обработкой ошибок
 run_command() {
-    local command="$1"
-    local error_message="$2"
-    
-    echo -e "\e[32mВыполняется: $command\e[0m"
-    if eval "$command"; then
-        log_message "Успешно выполнено: $command"
+    local cmd="$1"
+    log_message "Выполняется: $cmd"
+    if eval "$cmd" > /dev/null 2>&1; then
+        log_message "Успешно выполнено: $cmd"
     else
-        log_message "$error_message"
+        log_message "Ошибка при выполнении: $cmd"
         exit 1
     fi
 }
