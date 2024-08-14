@@ -10,7 +10,7 @@ run_command() {
     local command="$1"
     local error_message="$2"
     
-    echo -e "\e[32mВыполняется: $command\e[0m"
+    log_message "Выполняется: $command"
     if eval "$command"; then
         log_message "Успешно выполнено: $command"
     else
@@ -58,7 +58,7 @@ setup_telegram_bot() {
 
     # Запускаем бота
     log_message "Запуск Telegram бота..."
-    python3 telegram_bot.py &
+    python3 bot.py &
     echo $! > telegram_bot.pid
 
     log_message "Бот успешно запущен. Используйте следующие команды в чате с ботом:"
@@ -123,7 +123,12 @@ while true; do
 
             log_message "Установка Allora Worker..."
             git clone https://github.com/allora-network/basic-coin-prediction-node
-            cd basic-coin-prediction-node
+            if [ -d "basic-coin-prediction-node" ]; then
+                cd basic-coin-prediction-node || { log_message "Ошибка при переходе в каталог basic-coin-prediction-node"; exit 1; }
+            else
+                log_message "Ошибка: папка basic-coin-prediction-node не найдена после клонирования."
+                exit 1
+            fi
 
             # Запрос Seed Phrase
             read -p "Введите вашу Seed Phrase: " seed_phrase
@@ -175,7 +180,13 @@ while true; do
 EOF
 
             log_message "Запуск Allora Worker..."
-            run_command "chmod +x init.config && ./init.config && docker compose up -d --build"
+            if [ -f "init.config" ]; then
+                chmod +x init.config
+            else
+                log_message "Файл init.config не найден. Проверьте его создание."
+                exit 1
+            fi
+            run_command "./init.config && docker compose up -d --build"
             ;;
         2)
             log_message "Проверка логов... Для выхода в меню скрипта используйте комбинацию клавиш CTRL+C"
