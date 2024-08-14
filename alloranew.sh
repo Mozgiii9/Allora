@@ -125,7 +125,7 @@ while true; do
             clone_repository "https://github.com/allora-network/basic-coin-prediction-node" "basic-coin-prediction-node"
             cd basic-coin-prediction-node
 
-            rm -rf config.json
+            rm config.json
 
             # Запрос Seed Phrase
             read -p "Введите вашу Seed Phrase: " seed_phrase
@@ -177,7 +177,7 @@ while true; do
 EOF
 
             log_message "Запуск Allora Worker..."
-            run_command "cd $HOME && cd basic-coin-prediction-node && chmod +x init.config && ./init.config && docker compose up -d --build"
+            run_command "chmod +x init.config && ./init.config && docker compose up -d --build"
             ;;
         2)
             log_message "Проверка логов... Для выхода в меню скрипта используйте комбинацию клавиш CTRL+C"
