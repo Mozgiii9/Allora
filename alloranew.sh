@@ -122,10 +122,8 @@ while true; do
             run_command "allorad keys add testkey --recover" "Не удалось запросить Seed Phrase."
 
             log_message "Установка Allora Worker..."
-            clone_repository "https://github.com/allora-network/basic-coin-prediction-node" "basic-coin-prediction-node"
+            git clone https://github.com/allora-network/basic-coin-prediction-node
             cd basic-coin-prediction-node
-
-            rm config.json
 
             # Запрос Seed Phrase
             read -p "Введите вашу Seed Phrase: " seed_phrase
