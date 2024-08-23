@@ -1,0 +1,48 @@
+version: '3.8'
+services:
+  inference:
+    container_name: inference-basic-eth-pred
+    build: .
+    command: python -u /app/app.py
+    ports:
+      - "9000:9000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/inference/ETH"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - ./inference-data:/app/data
+  
+  updater:
+    container_name: updater-basic-eth-pred
+    build: .
+    environment:
+      - INFERENCE_API_ADDRESS=http://inference:9000
+    command: >
+      sh -c "
+      while true; do
+        python -u /app/update_app.py;
+        sleep 24h;
+      done
+      "
+    depends_on:
+      inference:
+        condition: service_started  # Меняем на "service_started"
+
+  worker:
+    container_name: worker
+    image: alloranetwork/allora-offchain-node:latest
+    volumes:
+      - ./worker-data:/data
+    depends_on:
+      inference:
+        condition: service_started  # Меняем на "service_started"
+    env_file:
+      - ./worker-data/env_file
+
+volumes:
+  inference-data:
+  worker-data:
+
